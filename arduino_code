@@ -1,0 +1,47 @@
+#include <Wire.h>
+#include "Adafruit_AS726x.h"
+#include <ArduinoJson.h>  // Install from Arduino Library Manager
+
+Adafruit_AS726x as726x;
+
+void setup() {
+    Serial.begin(115200);
+    Wire.begin();
+
+    Serial.println("\n🔍 Checking AS726X...");
+
+    if (!as726x.begin()) {
+        Serial.println("❌ ERROR: AS726X not detected! Check wiring.");
+        while (1);
+    }
+
+    Serial.println("✅ AS726X detected! Initializing...");
+    as726x.drvOff();  // Ensure LED is off first
+    delay(500);
+    as726x.drvOn();   // Turn LED on (for dark areas)
+}
+
+void loop() {
+    as726x.startMeasurement();
+    delay(800);  // Wait for sensor data
+
+    if (as726x.dataReady()) {
+        float readings[6];
+        as726x.readCalibratedValues(readings);
+
+        StaticJsonDocument<200> jsonDoc;
+        jsonDoc["Violet"] = readings[0];
+        jsonDoc["Blue"] = readings[1];
+        jsonDoc["Green"] = readings[2];
+        jsonDoc["Yellow"] = readings[3];
+        jsonDoc["Orange"] = readings[4];
+        jsonDoc["Red"] = readings[5];
+
+        serializeJson(jsonDoc, Serial);
+        Serial.println();  // Newline for Python parsing
+    } else {
+        Serial.println("{\"error\": \"No new data available\"}");
+    }
+
+    delay(2000);  // Wait before next reading
+}
