@@ -1,7 +1,5 @@
 import pandas as pd
 import numpy as np
-import serial
-import time
 from sklearn.semi_supervised import LabelPropagation
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, classification_report
@@ -48,27 +46,3 @@ print("\nFinal Model Accuracy:", round(accuracy, 3))
 print("\nClassification Report:")
 print(classification_report(y_test, y_pred))
 
-# Initialize Arduino connection
-Arduino = serial.Serial(port='COM7', baudrate=115200, timeout=0.1)
-time.sleep(2)  # Allow time for connection to establish
-
-print("Waiting for Arduino data...")
-
-while True:
-    try:
-        if Arduino.in_waiting:
-            line = Arduino.readline().decode('utf-8').strip()  # Read and decode data
-            if line:
-                print("Received from Arduino:", line)
-                try:
-                    spectral_values = [float(val) for val in line.split(',')]
-                    if len(spectral_values) == X.shape[1]:  # Ensure correct feature count
-                        spectral_values = np.array(spectral_values).reshape(1, -1)
-                        prediction = lp_model.predict(spectral_values)[0]
-                        print("Prediction:", "Blood Present" if prediction == 1 else "No Blood")
-                    else:
-                        print("Warning: Incorrect number of features received.")
-                except ValueError:
-                    print("Warning: Non-numeric data received. Skipping.")
-    except Exception as e:
-        print("Error processing Arduino data:", e)
